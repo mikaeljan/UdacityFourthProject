@@ -10,8 +10,7 @@ def deleteMatches():
     """Remove all the match records from the database."""
     db = connect()
     c = db.cursor()
-    c.execute("UPDATE players SET matches = 0")
-    c.execute("UPDATE players SET wins = 0")
+    c.execute("DELETE FROM matches")
     db.commit()
     db.close()
 
@@ -47,8 +46,7 @@ def registerPlayer(name):
     db = connect()
     c = db.cursor()
     c.execute("INSERT INTO players (name) values (%s)", (bleach.clean(name),))
-    c.execute("UPDATE players SET wins = 0")
-    c.execute("UPDATE players SET matches = 0")
+    # c.execute("UPDATE matches SET matches = 0")
     db.commit()
     db.close()
 
@@ -69,13 +67,10 @@ def playerStandings():
     """
     db = connect()
     c = db.cursor()
-    c.execute('''
-    SELECT * from players
-    ORDER BY matches DESC
-''')
-    db.commit()
-    standings = c.fetchall()
-    return standings
+    c.execute('''SELECT * FROM standings_view ORDER BY wins DESC''')
+    result = c.fetchall()
+    db.close()
+    return result
 
 def reportMatch(winner, loser):
     """Records the outcome of a single match between two players.
@@ -86,9 +81,13 @@ def reportMatch(winner, loser):
     """
     db = connect()
     c = db.cursor()
-    c.execute("UPDATE players SET matches = matches + 1 where player_id = (%s)", (bleach.clean(winner),))
-    c.execute("UPDATE players SET matches = matches + 1 where player_id = (%s)", (bleach.clean(loser),))
-    c.execute("UPDATE players SET wins = wins + 1 where player_id = (%s)", (bleach.clean(winner),))
+    c.execute('''INSERT INTO matches (winner_id, loser_id)
+                 VALUES (%s,%s)''', [(winner,),(loser,)])
+    # c.execute("UPDATE matches SET winner_id =  (%s)", (bleach.clean(winner),))
+    # c.execute("UPDATE matches SET loser_id =  (%s)", (bleach.clean(loser),))
+    # c.execute("UPDATE matches SET matches = matches + 1 where winner_id = (%s)", (bleach.clean(winner),))
+    # c.execute("UPDATE matches SET matches = matches + 1 where loser_id = (%s)", (bleach.clean(loser),))
+    # c.execute("UPDATE players SET wins = wins + 1 where player_id = (%s)", (bleach.clean(winner),))
     db.commit()
     db.close()
 
@@ -110,9 +109,9 @@ def swissPairings():
     """
     db = connect()
     c = db.cursor()
-    c.execute('SELECT player_id FROM players ORDER BY wins;')
+    c.execute('SELECT player_id FROM standings_view ORDER BY wins;')
     player_ids = c.fetchall()
-    c.execute('SELECT name FROM players ORDER BY wins;')
+    c.execute('SELECT name FROM standings_view ORDER BY wins;')
     names = c.fetchall()
     # This was solution presented in forum by one of my fellow classmates.
 
