@@ -22,7 +22,7 @@ CREATE VIEW player_count AS SELECT COUNT(player_id) FROM players;
 
 CREATE VIEW standings_view AS
 SELECT players.player_id, players.name,
-
+            
             (SELECT COUNT(matches.winner_id)
              FROM matches
              WHERE players.player_id = matches.winner_id)
